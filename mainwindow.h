@@ -8,11 +8,9 @@
 #include <QFile>
 #include <QStringList>
 #include "ui_mainwindow.h"
+#include "minecraft.h"
 
-#define MC_PATH "/.minecraft"
-#define FML_PATH "/.minecraft_fml"
-
-namespace Ui {
+namespace Ui {    
 class MainWindow;
 }
 
@@ -24,6 +22,7 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
+    QString mcPath;
 
 private slots:
     void on_LoginButton_clicked();
@@ -33,8 +32,14 @@ private slots:
     void on_launchButton_clicked();
     void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);
 
-private:
+    void on_Browse_clicked();
+
+    void on_actionSettings_triggered();
+    void on_actionExit_triggered();
+
+    private:
     // Variable
+    Minecraft mc;
     Ui::MainWindow *ui;
     QString name;
     QNetworkAccessManager *manager;

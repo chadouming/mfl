@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "settings.h"
 #include <QUrl>
 #include <QNetworkRequest>
 #include <QNetworkAccessManager>
@@ -17,7 +18,7 @@
 #include <QScriptEngine>
 #include <QScriptValue>
 #include <QScriptValueIterator>
-
+#include <QFileDialog>
 
 bool m_isReady = true;
 bool isWindows = false;
@@ -31,12 +32,20 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     ui->progressBar->setValue(0);
 
+    Minecraft mc;
+    isWindows = mc.isWindows;
+/*
     name = qgetenv("USER");
 
     if (name.isEmpty()) {
         name = qgetenv("USERNAME");
         isWindows = true;
     }
+
+    if(isWindows)
+        mcPath = "C:\\Users\\" + name + "\\minecraft\\installation\\";
+    else
+        mcPath = "/home/" + name + MC_PATH;*/
 }
 
 MainWindow::~MainWindow()
@@ -111,18 +120,10 @@ void MainWindow::on_dwnldButton_clicked()
     QProcess * modpackProcess = new QProcess(this);
     QString forgeid = "";
     QString versionid = "";
-    QString mcPath = "";
     QString unzipName = "";
     QString modpackName = "";
     QString dirname = "";
     QString modName = "";
-
-    if(isWindows)
-        mcPath = "C:\\Users\\" + name + "\\minecraft\\installation\\";
-    else
-        mcPath = "/home/" + name + MC_PATH;
-
-
 
     mesg.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
     mesg.setText("This will download, launch then leave Minecraft. \nForge setup will continue after.");
@@ -144,7 +145,7 @@ void MainWindow::on_dwnldButton_clicked()
 
 
 install_minecraft: {
-        qDebug(mcPath.toLatin1());
+        qDebug(mc.getPath().toLatin1());
 
         if(isWindows) {
         } else {
@@ -153,10 +154,10 @@ install_minecraft: {
             QDir().mkdir("/home/" + name + MC_PATH);
         }
 
-        QDir().mkpath(mcPath);
+        QDir().mkpath(mc.getPath());
 
         url = QString("http://s3.amazonaws.com/Minecraft.Download/launcher/Minecraft.jar");
-        QString mcName = mcPath + "\\minecraft.jar";
+        QString mcName = mc.getPath() + "\\minecraft.jar";
 
         downloadFile(url, mcName);
 
@@ -181,9 +182,9 @@ install_forge: {
         QString forgeName = "";
 
         if(ui->modpackUrl->text().isEmpty())
-            forgeName = mcPath + "/forge-installer.jar";
+            forgeName = mc.getPath() + "/forge-installer.jar";
         else
-            forgeName = mcPath + "/forge-" + versionid + forgeid.replace("forge", "") + "-installer.jar";
+            forgeName = mc.getPath() + "/forge-" + versionid + forgeid.replace("forge", "") + "-installer.jar";
 
         downloadFile(url, forgeName);
 
@@ -206,7 +207,7 @@ install_forge: {
 install_modpack: {
         if(isWindows) {
             QString unzipUrl = "http://stahlworks.com/dev/unzip.exe";
-            unzipName = mcPath + "unzip.exe";
+            unzipName = mc.getPath() + "unzip.exe";
 
             downloadFile(unzipUrl, unzipName);
 
@@ -216,7 +217,7 @@ install_modpack: {
 
         url = QString(ui->modpackUrl->text());
         if(isWindows)
-            modpackName = mcPath + "/modpack.zip";
+            modpackName = mc.getPath() + "/modpack.zip";
         else
             modpackName = "/home/" + name + MC_PATH + "/modpack.zip";
 
@@ -226,7 +227,7 @@ install_modpack: {
         loop.exec();
 
         if(isWindows)
-            modpackProcess->execute(unzipName + " -q -o " + modpackName + " -d " + mcPath);
+            modpackProcess->execute(unzipName + " -q -o " + modpackName + " -d " + mc.getPath());
         else
             modpackProcess->execute("unzip -o "+ modpackName + " -d " + "/home/" + name + MC_PATH + "/");
 
@@ -236,11 +237,11 @@ install_modpack: {
         while(modpackProcess->isOpen())
             QThread::msleep(1000);
 
-        copy_dir_recursive(mcPath + "overrides", mcPath, true);
+        copy_dir_recursive(mc.getPath() + "overrides", mc.getPath(), true);
 
         QFile file;
         if(isWindows)
-            file.setFileName(mcPath + "/manifest.json");
+            file.setFileName(mc.getPath() + "/manifest.json");
         else
             file.setFileName("/home/" + name + MC_PATH + "/manifest.json");
         file.open(QIODevice::ReadOnly | QIODevice::Text);
@@ -251,7 +252,7 @@ install_modpack: {
         QScriptValue result = engine.evaluate("(" + data + ")");
 
         if(isWindows)
-            QDir().mkdir(mcPath + "/mods");
+            QDir().mkdir(mc.getPath() + "/mods");
         else
             QDir().mkdir("/home/" + name + MC_PATH + "/mods");
 
@@ -322,7 +323,7 @@ install_modpack: {
                             ui->modlabel->setText(s1);
 
                             if(isWindows)
-                                modName = mcPath + "/mods/" + s1;
+                                modName = mc.getPath() + "/mods/" + s1;
                             else
                                 modName = "/home/" + name + MC_PATH + "/mods/" + s1;
 
@@ -453,4 +454,21 @@ bool copy_dir_recursive(QString from_dir, QString to_dir, bool replace_on_confli
     dir2.removeRecursively();
 
     return true;
+}
+
+void MainWindow::on_Browse_clicked()
+{
+    QString packZip = QFileDialog::getOpenFileName(this, tr("Open pack archive"), "/home", tr("Archives (*.zip)"));
+    ui->modpackUrl->setText(packZip);
+}
+
+void MainWindow::on_actionSettings_triggered()
+{
+    Settings *set = new Settings(this, &mc);
+    set->show();
+}
+
+void MainWindow::on_actionExit_triggered()
+{
+    this->close();
 }

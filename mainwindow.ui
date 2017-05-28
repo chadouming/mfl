@@ -48,9 +48,9 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>482</x>
+      <x>502</x>
       <y>300</y>
-      <width>221</width>
+      <width>201</width>
       <height>24</height>
      </rect>
     </property>
@@ -64,9 +64,9 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>482</x>
+      <x>502</x>
       <y>270</y>
-      <width>221</width>
+      <width>201</width>
       <height>24</height>
      </rect>
     </property>
@@ -77,8 +77,8 @@
    <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
-      <x>398</x>
-      <y>304</y>
+      <x>420</x>
+      <y>300</y>
       <width>71</width>
       <height>20</height>
      </rect>
@@ -96,8 +96,8 @@
    <widget class="QLabel" name="label_2">
     <property name="geometry">
      <rect>
-      <x>398</x>
-      <y>274</y>
+      <x>420</x>
+      <y>270</y>
       <width>71</width>
       <height>20</height>
      </rect>
@@ -141,24 +141,29 @@
    <widget class="QPushButton" name="dwnldButton">
     <property name="geometry">
      <rect>
-      <x>0</x>
+      <x>10</x>
       <y>320</y>
-      <width>141</width>
+      <width>131</width>
       <height>41</height>
      </rect>
     </property>
     <property name="text">
-     <string>Download Forge</string>
+     <string>Get Pack</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_3">
     <property name="geometry">
      <rect>
-      <x>540</x>
+      <x>500</x>
       <y>270</y>
-      <width>151</width>
+      <width>191</width>
       <height>51</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>20</pointsize>
+     </font>
     </property>
     <property name="text">
      <string>Coming one day</string>
@@ -169,7 +174,7 @@
      <rect>
       <x>10</x>
       <y>290</y>
-      <width>391</width>
+      <width>351</width>
       <height>24</height>
      </rect>
     </property>
@@ -277,6 +282,19 @@
      <bool>true</bool>
     </property>
    </widget>
+   <widget class="QPushButton" name="Browse">
+    <property name="geometry">
+     <rect>
+      <x>370</x>
+      <y>290</y>
+      <width>56</width>
+      <height>26</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>...</string>
+    </property>
+   </widget>
    <zorder>LoginButton</zorder>
    <zorder>PassText</zorder>
    <zorder>LoginText</zorder>
@@ -293,6 +311,7 @@
    <zorder>progressBar</zorder>
    <zorder>modlabel</zorder>
    <zorder>ErrorLabel</zorder>
+   <zorder>Browse</zorder>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
@@ -300,11 +319,42 @@
      <x>0</x>
      <y>0</y>
      <width>713</width>
-     <height>21</height>
+     <height>20</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuHello">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionSettings"/>
+    <addaction name="separator"/>
+    <addaction name="actionExit"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionAbout"/>
+   </widget>
+   <addaction name="menuHello"/>
+   <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
+  <action name="actionSettings">
+   <property name="text">
+    <string>Settings</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="text">
+    <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="text">
+    <string>About</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <tabstops>
