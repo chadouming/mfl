@@ -10,7 +10,7 @@ Settings::Settings(QWidget *parent, Minecraft* mc) : QDialog(parent), ui(new Ui:
     minecraft = mc;
 
     if(minecraft!=0){
-        ui->mcPathBox->setText(minecraft->getPath());
+        ui->mcPathBox->setText(mc->getPath());
     } else {
         ui->mcPathBox->setText("Error getting minecraft internal class o.O");
     }

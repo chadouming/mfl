@@ -22,34 +22,47 @@
 
 bool m_isReady = true;
 bool isWindows = false;
+QFile settings("mflSettings.conf");
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     QDir dir;
+    char tempStr[500] = {0};
 
     ui->setupUi(this);
     ui->progressBar->setValue(0);
 
-    Minecraft mc;
     isWindows = mc.isWindows;
-/*
-    name = qgetenv("USER");
 
-    if (name.isEmpty()) {
-        name = qgetenv("USERNAME");
-        isWindows = true;
+    if(settings.exists()){
+        settings.open(QIODevice::ReadOnly);
+        settings.readLine(tempStr, 500);
+        QString tempMcPath(tempStr);
+        if(tempMcPath.startsWith("mcPath:")){
+            tempMcPath.remove(0, 7);
+        }
+        qDebug("\nloadedPath - ");
+        qDebug(tempMcPath.toLatin1());
+        mc.setPath(tempMcPath);
+        settings.close();
+    } else {
+        settings.open(QIODevice::WriteOnly);
+        QString tempPath = "mcPath:"+mc.getPath();
+        settings.write(tempPath.toLatin1(), strlen(tempPath.toLatin1()));
+        settings.close();
     }
-
-    if(isWindows)
-        mcPath = "C:\\Users\\" + name + "\\minecraft\\installation\\";
-    else
-        mcPath = "/home/" + name + MC_PATH;*/
 }
 
 MainWindow::~MainWindow()
 {
+    qDebug("Saving settings to disc");
+    settings.open(QIODevice::WriteOnly);
+    QString tempPath = "mcPath:"+mc.getPath();
+    settings.write(tempPath.toLatin1(), strlen(tempPath.toLatin1()));
+    settings.close();
+
     delete ui;
 }
 
@@ -157,7 +170,7 @@ install_minecraft: {
         QDir().mkpath(mc.getPath());
 
         url = QString("http://s3.amazonaws.com/Minecraft.Download/launcher/Minecraft.jar");
-        QString mcName = mc.getPath() + "\\minecraft.jar";
+        QString mcName = mc.getPath() + "/minecraft.jar";
 
         downloadFile(url, mcName);
 
@@ -200,14 +213,14 @@ install_forge: {
             QThread::msleep(1000);
 
         qDebug() << "Removing forge jar";
-        QFile::remove(forgeName);
+        //QFile::remove(forgeName);
 
         return;
 }
 install_modpack: {
         if(isWindows) {
             QString unzipUrl = "http://stahlworks.com/dev/unzip.exe";
-            unzipName = mc.getPath() + "unzip.exe";
+            unzipName = mc.getPath() + "/unzip.exe";
 
             downloadFile(unzipUrl, unzipName);
 
@@ -231,8 +244,8 @@ install_modpack: {
         else
             modpackProcess->execute("unzip -o "+ modpackName + " -d " + "/home/" + name + MC_PATH + "/");
 
-        dir.remove(unzipName);
-        dir.remove(modpackName);
+        //dir.remove(unzipName);
+        //dir.remove(modpackName);
 
         while(modpackProcess->isOpen())
             QThread::msleep(1000);
