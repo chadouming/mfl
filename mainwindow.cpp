@@ -18,6 +18,7 @@
 #include <QScriptEngine>
 #include <QScriptValue>
 #include <QScriptValueIterator>
+#include <QDebug>
 #include <QFileDialog>
 
 bool m_isReady = true;
@@ -200,8 +201,9 @@ install_forge: {
 }
 install_modpack: {
 
-        if(!QDir(mc->getPath()).exists()) {
-            QDir().mkdir(mc->getPath());
+        QDir dir(mc->getPath());
+        if(!dir.exists()) {
+            dir.mkpath(".");
         }
 
         if(isWindows) {
@@ -215,15 +217,21 @@ install_modpack: {
         }
 
         url = QString(ui->modpackUrl->text());
+
         if(isWindows)
-            modpackName = mc->getPath() + "/modpack.zip";
+            modpackName = mc->getPath() + "modpack.zip";
         else
             modpackName = "/home/" + name + MC_PATH + "/modpack.zip";
 
-        downloadFile(url, modpackName);
+        QFile modpack(url.toString());
 
-        connect(manager, SIGNAL(finished(QNetworkReply *)), &loop, SLOT(quit()));
-        loop.exec();
+        if(modpack.exists()) {
+            modpack.copy(modpackName);
+        } else {
+            downloadFile(url, modpackName);
+            connect(manager, SIGNAL(finished(QNetworkReply *)), &loop, SLOT(quit()));
+            loop.exec();
+        }
 
         if(isWindows)
             modpackProcess->execute(unzipName + " -q -o " + modpackName + " -d " + mc->getPath());
@@ -240,9 +248,10 @@ install_modpack: {
 
         QFile file;
         if(isWindows)
-            file.setFileName(mc->getPath() + "/manifest.json");
+            file.setFileName(mc->getPath() + "manifest.json");
         else
-            file.setFileName("/home/" + name + MC_PATH + "/manifest.json");
+            file.setFileName("/home/" + name + MC_PATH + "manifest.json");
+
         file.open(QIODevice::ReadOnly | QIODevice::Text);
 
         QString data = QString(file.readAll());
@@ -290,7 +299,7 @@ install_modpack: {
                         QObject::connect(&mgr, SIGNAL(finished(QNetworkReply*)), &eventLoop, SLOT(quit()));
 
                         // the HTTP request
-                        QNetworkRequest req( QUrl( QString("http://minecraft.curseforge.com/mc-mods/" + entry.property("projectID").toString() + "?cookieTest=0") ) );
+                        QNetworkRequest req( QUrl( QString("https://minecraft.curseforge.com/projects/" + entry.property("projectID").toString()) ) );
                         QNetworkReply *reply2 = mgr.get(req);
                         eventLoop.exec(); // blocks stack until "finished()" has been called
 
@@ -303,14 +312,21 @@ install_modpack: {
                             QObject::connect(&mgr2, SIGNAL(finished(QNetworkReply*)), &eventLoop2, SLOT(quit()));
 
                             // the HTTP request
-                            QNetworkRequest req2( QUrl( QString("http://minecraft.curseforge.com" + reply2->rawHeader("location") + "/files/" + entry.property("fileID").toString() + "/download?cookieTest=0") ) );
+                            QNetworkRequest req2( QUrl( QString("https://minecraft.curseforge.com" + reply2->rawHeader("Location") + "/files/" + entry.property("fileID").toString() + "/download") ) );
+
+                            qDebug().nospace().noquote() << "\n\n https://minecraft.curseforge.com" << reply2->rawHeader("Location") << "/files/" << entry.property("fileID").toString() << "/download \n\n";
+                            qDebug().nospace().noquote() << "\n" << reply2->rawHeader("Location") << "\n\n";
 
                             QNetworkReply *reply3 = mgr2.get(req2);
                             eventLoop2.exec(); // blocks stack until "finished()" has been called
 
-                            QString buff = QString(reply3->rawHeader("location"));
+                            QString buff = QString(reply3->rawHeader("Location"));
 
-                            buff.replace("http://addons.cursecdn.com/","http://addons-origin.cursecdn.com/");
+                            if(req2.HttpStatusCodeAttribute != 302) {
+                                // TODO: tell user which mod doesn't exist.
+                                continue;
+                            }
+                            buff.replace("https://addons.cursecdn.com/","https://addons-origin.cursecdn.com/");
 
                             url = buff;
 
@@ -404,11 +420,8 @@ bool copy_dir_recursive(QString from_dir, QString to_dir, bool replace_on_confli
     from_dir += QDir::separator();
     to_dir += QDir::separator();
 
-    qDebug(from_dir.toLatin1());
-
     foreach (QString copy_file, dir.entryList(QDir::Files))
     {
-        qDebug("I'M HERE");
         QString from = from_dir + copy_file;
         QString to = to_dir + copy_file;
 
