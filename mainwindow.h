@@ -9,6 +9,7 @@
 #include <QStringList>
 #include "ui_mainwindow.h"
 #include "minecraft.h"
+#include "settings.h"
 
 namespace Ui {    
 class MainWindow;
@@ -39,7 +40,8 @@ private slots:
 
     private:
     // Variable
-    Minecraft mc;
+    Minecraft *mc;
+    Settings *sett;
     Ui::MainWindow *ui;
     QString name;
     QNetworkAccessManager *manager;

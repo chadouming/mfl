@@ -22,48 +22,29 @@
 
 bool m_isReady = true;
 bool isWindows = false;
-QFile settings("mflSettings.conf");
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     QDir dir;
-    char tempStr[500] = {0};
+
+    mc = new Minecraft(this);
+    isWindows = mc->isWindows;
+
+    sett = new Settings(this, mc);
 
     ui->setupUi(this);
     ui->progressBar->setValue(0);
 
-    isWindows = mc.isWindows;
-
-    if(settings.exists()){
-        settings.open(QIODevice::ReadOnly);
-        settings.readLine(tempStr, 500);
-        QString tempMcPath(tempStr);
-        if(tempMcPath.startsWith("mcPath:")){
-            tempMcPath.remove(0, 7);
-        }
-        qDebug("\nloadedPath - ");
-        qDebug(tempMcPath.toLatin1());
-        mc.setPath(tempMcPath);
-        settings.close();
-    } else {
-        settings.open(QIODevice::WriteOnly);
-        QString tempPath = "mcPath:"+mc.getPath();
-        settings.write(tempPath.toLatin1(), strlen(tempPath.toLatin1()));
-        settings.close();
-    }
 }
 
 MainWindow::~MainWindow()
 {
-    qDebug("Saving settings to disc");
-    settings.open(QIODevice::WriteOnly);
-    QString tempPath = "mcPath:"+mc.getPath();
-    settings.write(tempPath.toLatin1(), strlen(tempPath.toLatin1()));
-    settings.close();
+    sett->saveSettings();
 
     delete ui;
+    delete sett;
 }
 
 void MainWindow::on_LoginButton_clicked()
@@ -158,7 +139,7 @@ void MainWindow::on_dwnldButton_clicked()
 
 
 install_minecraft: {
-        qDebug(mc.getPath().toLatin1());
+        qDebug(mc->getPath().toLatin1());
 
         if(isWindows) {
         } else {
@@ -167,10 +148,10 @@ install_minecraft: {
             QDir().mkdir("/home/" + name + MC_PATH);
         }
 
-        QDir().mkpath(mc.getPath());
+        QDir().mkpath(mc->getPath());
 
         url = QString("http://s3.amazonaws.com/Minecraft.Download/launcher/Minecraft.jar");
-        QString mcName = mc.getPath() + "/minecraft.jar";
+        QString mcName = mc->getPath() + "/minecraft.jar";
 
         downloadFile(url, mcName);
 
@@ -195,9 +176,9 @@ install_forge: {
         QString forgeName = "";
 
         if(ui->modpackUrl->text().isEmpty())
-            forgeName = mc.getPath() + "/forge-installer.jar";
+            forgeName = mc->getPath() + "/forge-installer.jar";
         else
-            forgeName = mc.getPath() + "/forge-" + versionid + forgeid.replace("forge", "") + "-installer.jar";
+            forgeName = mc->getPath() + "/forge-" + versionid + forgeid.replace("forge", "") + "-installer.jar";
 
         downloadFile(url, forgeName);
 
@@ -218,9 +199,14 @@ install_forge: {
         return;
 }
 install_modpack: {
+
+        if(!QDir(mc->getPath()).exists()) {
+            QDir().mkdir(mc->getPath());
+        }
+
         if(isWindows) {
             QString unzipUrl = "http://stahlworks.com/dev/unzip.exe";
-            unzipName = mc.getPath() + "/unzip.exe";
+            unzipName = mc->getPath() + "/unzip.exe";
 
             downloadFile(unzipUrl, unzipName);
 
@@ -230,7 +216,7 @@ install_modpack: {
 
         url = QString(ui->modpackUrl->text());
         if(isWindows)
-            modpackName = mc.getPath() + "/modpack.zip";
+            modpackName = mc->getPath() + "/modpack.zip";
         else
             modpackName = "/home/" + name + MC_PATH + "/modpack.zip";
 
@@ -240,7 +226,7 @@ install_modpack: {
         loop.exec();
 
         if(isWindows)
-            modpackProcess->execute(unzipName + " -q -o " + modpackName + " -d " + mc.getPath());
+            modpackProcess->execute(unzipName + " -q -o " + modpackName + " -d " + mc->getPath());
         else
             modpackProcess->execute("unzip -o "+ modpackName + " -d " + "/home/" + name + MC_PATH + "/");
 
@@ -250,11 +236,11 @@ install_modpack: {
         while(modpackProcess->isOpen())
             QThread::msleep(1000);
 
-        copy_dir_recursive(mc.getPath() + "overrides", mc.getPath(), true);
+        copy_dir_recursive(mc->getPath() + "overrides", mc->getPath(), true);
 
         QFile file;
         if(isWindows)
-            file.setFileName(mc.getPath() + "/manifest.json");
+            file.setFileName(mc->getPath() + "/manifest.json");
         else
             file.setFileName("/home/" + name + MC_PATH + "/manifest.json");
         file.open(QIODevice::ReadOnly | QIODevice::Text);
@@ -265,7 +251,7 @@ install_modpack: {
         QScriptValue result = engine.evaluate("(" + data + ")");
 
         if(isWindows)
-            QDir().mkdir(mc.getPath() + "/mods");
+            QDir().mkdir(mc->getPath() + "/mods");
         else
             QDir().mkdir("/home/" + name + MC_PATH + "/mods");
 
@@ -336,7 +322,7 @@ install_modpack: {
                             ui->modlabel->setText(s1);
 
                             if(isWindows)
-                                modName = mc.getPath() + "/mods/" + s1;
+                                modName = mc->getPath() + "/mods/" + s1;
                             else
                                 modName = "/home/" + name + MC_PATH + "/mods/" + s1;
 
@@ -477,7 +463,7 @@ void MainWindow::on_Browse_clicked()
 
 void MainWindow::on_actionSettings_triggered()
 {
-    Settings *set = new Settings(this, &mc);
+    Settings *set = new Settings(this, mc);
     set->show();
 }
 
