@@ -10,6 +10,7 @@
 #include "ui_mainwindow.h"
 #include "minecraft.h"
 #include "settings.h"
+#include "downloaderrorui.h"
 
 namespace Ui {    
 class MainWindow;

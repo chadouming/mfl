@@ -285,9 +285,9 @@
    <widget class="QPushButton" name="Browse">
     <property name="geometry">
      <rect>
-      <x>370</x>
+      <x>365</x>
       <y>290</y>
-      <width>56</width>
+      <width>61</width>
       <height>26</height>
      </rect>
     </property>

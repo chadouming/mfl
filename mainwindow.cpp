@@ -286,6 +286,7 @@ install_modpack: {
 
           entries = result.property("files");
           QScriptValueIterator it2(entries);
+          QString erroredMods;
           while (it2.hasNext()) {
              it2.next();
               QScriptValue entry = it2.value();
@@ -323,7 +324,7 @@ install_modpack: {
                             QString buff = QString(reply3->rawHeader("Location"));
 
                             if(req2.HttpStatusCodeAttribute != 302) {
-                                // TODO: tell user which mod doesn't exist.
+                                erroredMods = erroredMods + ("Mod : " + reply2->rawHeader("Location") + " \n  File id: " + entry.property("fileID").toString() + "\n");
                                 continue;
                             }
                             buff.replace("https://addons.cursecdn.com/","https://addons-origin.cursecdn.com/");
@@ -350,7 +351,10 @@ install_modpack: {
 
                         }
                 }
-
+                if(!erroredMods.isEmpty()){
+                    DownloadErrorUi dlErUi(this, erroredMods);
+                    dlErUi.show();
+                }
                 ui->modlabel->setText("Done");
            }
 
