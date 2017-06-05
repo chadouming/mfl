@@ -218,6 +218,12 @@ install_forge: {
         return;
 }
 install_modpack: {
+
+        QDir dir(mc.getPath());
+        if(!dir.exists()) {
+            dir.mkpath(".");
+        }
+
         if(isWindows) {
             QString unzipUrl = "http://stahlworks.com/dev/unzip.exe";
             unzipName = mc.getPath() + "/unzip.exe";
