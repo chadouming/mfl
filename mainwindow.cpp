@@ -36,45 +36,30 @@
 #include <qiterator.h>
 
 bool isWindows = false;
-QFile settings("mflSettings.conf");
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     QDir dir;
-    char tempStr[500] = {0};
+
+    mc = new Minecraft(this);
+    isWindows = mc->isWindows;
+
+    sett = new Settings(this, mc);
 
     ui->setupUi(this);
     ui->progressBar->setValue(0);
+    connect(ui->Browse, SIGNAL(clicked(bool)), this, SLOT(on_Browse_clicked()));
 
-    isWindows = mc.isWindows;
-
-    if(settings.exists()){
-        settings.open(QIODevice::ReadOnly);
-        settings.readLine(tempStr, 500);
-        QString tempMcPath(tempStr);
-        if(tempMcPath.startsWith("mcPath:")){
-            tempMcPath.remove(0, 7);
-        }
-        mc.setPath(tempMcPath);
-        settings.close();
-    } else {
-        settings.open(QIODevice::WriteOnly);
-        QString tempPath = "mcPath:"+mc.getPath();
-        settings.write(tempPath.toLatin1(), strlen(tempPath.toLatin1()));
-        settings.close();
-    }
 }
 
 MainWindow::~MainWindow()
 {
-    settings.open(QIODevice::WriteOnly);
-    QString tempPath = "mcPath:"+mc.getPath();
-    settings.write(tempPath.toLatin1(), strlen(tempPath.toLatin1()));
-    settings.close();
+    sett->saveSettings();
 
     delete ui;
+    delete sett;
 }
 
 void MainWindow::on_LoginButton_clicked()
@@ -85,11 +70,6 @@ void MainWindow::on_LoginButton_clicked()
         ui->ErrorLabel->setText("Need to enter your password please");
     else
         MainWindow::login();
-}
-
-void MainWindow::setProgress(int pct)
-{
-    ui->progressBar->setValue(pct);
 }
 
 int MainWindow::login()
@@ -168,17 +148,17 @@ void MainWindow::on_dwnldButton_clicked()
 
 
 install_minecraft: {
-        QDir().mkpath(mc.getPath());
+        QDir().mkpath(mc->getPath());
 
         ftd.url = "https://s3.amazonaws.com/Minecraft.Download/indexes/" + versionid.split(".")[0] + "." + versionid.split(".")[1] + ".json";
-        ftd.name = mc.getPath() + "resources.json";
+        ftd.name = mc->getPath() + "resources.json";
 
         manager.append(ftd);
         manager.startDownloads();
 
         QFile file2;
         if(isWindows)
-            file2.setFileName(mc.getPath() + "resources.json");
+            file2.setFileName(mc->getPath() + "resources.json");
         else
             file2.setFileName("/home/" + name + MC_PATH + "manifest.json");
 
@@ -216,16 +196,16 @@ install_minecraft: {
                 if(hash.isEmpty() || hash.isNull())
                     continue;
 
-                QDir dir2(mc.getPath() + "resources");
+                QDir dir2(mc->getPath() + "resources");
                 if(!dir2.exists())
                     dir2.mkpath(".");
 
-                QFile resourceFile(mc.getPath() + "resources/" + iter.key());
+                QFile resourceFile(mc->getPath() + "resources/" + iter.key());
                 if(!QFileInfo(resourceFile).absoluteDir().exists())
                     QFileInfo(resourceFile).absoluteDir().mkpath(".");
 
                 ftd.url = "https://resources.download.minecraft.net/" + hash.left(2) + "/" + hash;
-                ftd.name = mc.getPath() + "/resources/" + iter.key();
+                ftd.name = mc->getPath() + "/resources/" + iter.key();
 
                 manager.append(ftd);
                 ui->progressBar->setValue(ui->progressBar->value() + 1);
@@ -249,9 +229,9 @@ install_forge: {
         QString forgeName = "";
 
         if(ui->modpackUrl->text().isEmpty())
-            forgeName = mc.getPath() + "/forge-installer.jar";
+            forgeName = mc->getPath() + "/forge-installer.jar";
         else
-            forgeName = mc.getPath() + "/forge-" + versionid + forgeid.replace("forge", "") + "-installer.jar";
+            forgeName = mc->getPath() + "/forge-" + versionid + forgeid.replace("forge", "") + "-installer.jar";
 
         ftd.url = url;
         ftd.name = forgeName;
@@ -273,14 +253,14 @@ install_forge: {
 }
 install_modpack: {
 
-        QDir dir(mc.getPath());
+        QDir dir(mc->getPath());
         if(!dir.exists()) {
             dir.mkpath(".");
         }
 
         if(isWindows) {
             QString unzipUrl = "http://stahlworks.com/dev/unzip.exe";
-            unzipName = mc.getPath() + "/unzip.exe";
+            unzipName = mc->getPath() + "/unzip.exe";
 
             ftd.url = unzipUrl;
             ftd.name = unzipName;
@@ -293,7 +273,7 @@ install_modpack: {
         url = QString(ui->modpackUrl->text());
 
         if(isWindows)
-            modpackName = mc.getPath() + "modpack.zip";
+            modpackName = mc->getPath() + "modpack.zip";
         else
             modpackName = "/home/" + name + MC_PATH + "/modpack.zip";
 
@@ -310,7 +290,7 @@ install_modpack: {
         }
 
         if(isWindows)
-            modpackProcess->execute(unzipName + " -q -o " + modpackName + " -d " + mc.getPath());
+            modpackProcess->execute(unzipName + " -q -o " + modpackName + " -d " + mc->getPath());
         else
             modpackProcess->execute("unzip -o "+ modpackName + " -d " + "/home/" + name + MC_PATH + "/");
 
@@ -320,11 +300,11 @@ install_modpack: {
         while(modpackProcess->isOpen())
             QThread::msleep(1000);
 
-        copy_dir_recursive(mc.getPath() + "overrides", mc.getPath(), true);
+        copy_dir_recursive(mc->getPath() + "overrides", mc->getPath(), true);
 
         QFile file;
         if(isWindows)
-            file.setFileName(mc.getPath() + "manifest.json");
+            file.setFileName(mc->getPath() + "manifest.json");
         else
             file.setFileName("/home/" + name + MC_PATH + "manifest.json");
 
@@ -336,7 +316,7 @@ install_modpack: {
         QScriptValue result = engine.evaluate("(" + data + ")");
 
         if(isWindows)
-            QDir().mkdir(mc.getPath() + "/mods");
+            QDir().mkdir(mc->getPath() + "mods");
         else
             QDir().mkdir("/home/" + name + MC_PATH + "/mods");
 
@@ -413,7 +393,7 @@ install_modpack: {
                             QString s1 = f.fileName();
 
                             if(isWindows)
-                                modName = mc.getPath() + "/mods/" + s1;
+                                modName = mc->getPath() + "/mods/" + s1;
                             else
                                 modName = "/home/" + name + MC_PATH + "/mods/" + s1;
 
@@ -448,7 +428,7 @@ void MainWindow::on_Browse_clicked()
 
 void MainWindow::on_actionSettings_triggered()
 {
-    Settings *set = new Settings(this, &mc);
+    Settings *set = new Settings(this, mc);
     set->show();
 }
 

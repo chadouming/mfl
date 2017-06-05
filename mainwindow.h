@@ -21,6 +21,7 @@
 #include "ui_mainwindow.h"
 #include "minecraft.h"
 #include "downloadmanager.h"
+#include "settings.h"
 
 namespace Ui {    
 class MainWindow;
@@ -50,9 +51,10 @@ private slots:
     // Variable
     DownloadManager manager;
     fileToDownload ftd;
-    Minecraft mc;
+    Minecraft *mc;
     QString name;
     QNetworkReply *reply;
+    Settings *sett;
     Ui::MainWindow *ui;
 
     // Methods
