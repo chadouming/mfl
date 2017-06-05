@@ -7,23 +7,23 @@
 QT       += core gui
 QT       += network
 QT       += script
+QT       += widgets
 
-LIBS += -L"E:/OpenSSL-Win32/bin" -llibcrypto-1_1
-LIBS += -L"E:/OpenSSL-Win32/bin" -llibssl-1_1
+# OpenSSL path (Change to fit your need)
+LIBS     += -L"C:/OpenSSL-Win32/bin" -llibcrypto-1_1
+LIBS     += -L"C:/OpenSSL-Win32/bin" -llibssl-1_1
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+TARGET    = Minecraft_Forge_Launcher
+TEMPLATE  = app
 
-TARGET = Minecraft_Forge_Launcher
-TEMPLATE = app
-
-SOURCES += main.cpp\
-        mainwindow.cpp \
-    settings.cpp \
-    minecraft.cpp
+SOURCES  += main.cpp\
+            mainwindow.cpp \
+            settings.cpp \
+            minecraft.cpp
 
 HEADERS  += mainwindow.h \
-    settings.h \
-    minecraft.h
+            settings.h \
+            minecraft.h
 
 FORMS    += mainwindow.ui \
-    settings.ui
+            settings.ui
