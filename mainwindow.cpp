@@ -235,15 +235,20 @@ install_modpack: {
         }
 
         url = QString(ui->modpackUrl->text());
+
         if(isWindows)
             modpackName = mc.getPath() + "/modpack.zip";
         else
             modpackName = "/home/" + name + MC_PATH + "/modpack.zip";
 
-        downloadFile(url, modpackName);
-
-        connect(manager, SIGNAL(finished(QNetworkReply *)), &loop, SLOT(quit()));
-        loop.exec();
+        QFile modpack(url.toString());
+        if(modpack.exists()) {
+            modpack.copy(modpackName);
+        } else {
+            downloadFile(url, modpackName);
+            connect(manager, SIGNAL(finished(QNetworkReply *)), &loop, SLOT(quit()));
+            loop.exec();
+        }
 
         if(isWindows)
             modpackProcess->execute(unzipName + " -q -o " + modpackName + " -d " + mc.getPath());
