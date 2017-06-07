@@ -5,7 +5,7 @@
  * that fits my need.
  *
  * Chad Cormier Roussel <chadcormierroussel@gmail.com>
- * Christophe-Andre Gassman <Christo-Chibougamo@hotmail.com>
+ * Christophe-Andre Gassmann <Christo-Chibougamo@hotmail.com>
  *
  */
 
@@ -61,7 +61,6 @@ bool Settings::saveSettings()
     settings.write(tempMinMem.toLatin1(), strlen(tempMinMem.toLatin1()));
     QString tempJVMArgs = "jvmArg:"+minecraft->getJVMArgs()+"\n";
     settings.write(tempJVMArgs.toLatin1(), strlen(tempJVMArgs.toLatin1()));
-
     settings.close();
     return true;
 }
@@ -77,16 +76,16 @@ bool Settings::readSettings()
         settings.readLine(tempStr, 500);
         QString tempLine(tempStr);
         if(tempLine.startsWith("mcPath:")){
-            tempLine.remove(0, 7);
+            tempLine.remove(0, 7).trimmed().simplified();
             minecraft->setPath(tempLine);
         }else if(tempLine.startsWith("maxRam:")){
-            tempLine.remove(0, 7);
+            tempLine.remove(0, 7).trimmed().simplified();
             minecraft->setMaxRam(tempLine);
         }else if(tempLine.startsWith("minRam:")){
-            tempLine.remove(0, 7);
+            tempLine.remove(0, 7).trimmed().simplified();
             minecraft->setMinRam(tempLine);
         }else if(tempLine.startsWith("jvmArg:")){
-            tempLine.remove(0, 7);
+            tempLine.remove(0, 7).trimmed().simplified();
             minecraft->setJVMArgs(tempLine);
         }else{
             qDebug("[Settings] unknown line read...");

@@ -5,7 +5,7 @@
  * that fits my need.
  *
  * Chad Cormier Roussel <chadcormierroussel@gmail.com>
- * Christophe-Andre Gassman <Christo-Chibougamo@hotmail.com>
+ * Christophe-Andre Gassmann <Christo-Chibougamo@hotmail.com>
  *
  */
 
@@ -31,7 +31,7 @@ Minecraft::Minecraft(QWidget *parent)
 
 QString Minecraft::getPath()
 {
-    return path;
+    return QString(path).simplified();
 }
 
 void Minecraft::setPath(QString p)

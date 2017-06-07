@@ -5,7 +5,7 @@
  * that fits my need.
  *
  * Chad Cormier Roussel <chadcormierroussel@gmail.com>
- * Christophe-Andre Gassman <Christo-Chibougamo@hotmail.com>
+ * Christophe-Andre Gassmann <Christo-Chibougamo@hotmail.com>
  *
  */
 
@@ -51,7 +51,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     ui->progressBar->setValue(0);
     connect(ui->Browse, SIGNAL(clicked(bool)), this, SLOT(on_Browse_clicked()));
-
 }
 
 MainWindow::~MainWindow()
@@ -118,7 +117,7 @@ void MainWindow::on_dwnldButton_clicked()
     QDir dir;
     QString url;
     QMessageBox mesg;
-    QProcess * mcProcess = new QProcess(this);
+     QProcess * mcProcess = new QProcess(this);
     QProcess * forgeProcess = new QProcess(this);
     QProcess * modpackProcess = new QProcess(this);
     QString forgeid = "";
@@ -151,16 +150,16 @@ install_minecraft: {
         QDir().mkpath(mc->getPath());
 
         ftd.url = "https://s3.amazonaws.com/Minecraft.Download/indexes/" + versionid.split(".")[0] + "." + versionid.split(".")[1] + ".json";
-        ftd.name = mc->getPath() + "resources.json";
+        ftd.name = mc->getPath() + "/resources.json";
 
         manager.append(ftd);
         manager.startDownloads();
 
         QFile file2;
         if(isWindows)
-            file2.setFileName(mc->getPath() + "resources.json");
+            file2.setFileName(mc->getPath() + "/resources.json");
         else
-            file2.setFileName("/home/" + name + MC_PATH + "manifest.json");
+            file2.setFileName("/home/" + name + MC_PATH + "/manifest.json");
 
         file2.open(QIODevice::ReadOnly | QIODevice::Text);
 
@@ -196,11 +195,11 @@ install_minecraft: {
                 if(hash.isEmpty() || hash.isNull())
                     continue;
 
-                QDir dir2(mc->getPath() + "resources");
+                QDir dir2(mc->getPath() + "/resources/");
                 if(!dir2.exists())
                     dir2.mkpath(".");
 
-                QFile resourceFile(mc->getPath() + "resources/" + iter.key());
+                QFile resourceFile(mc->getPath() + "/resources/" + iter.key());
                 if(!QFileInfo(resourceFile).absoluteDir().exists())
                     QFileInfo(resourceFile).absoluteDir().mkpath(".");
 
@@ -273,7 +272,7 @@ install_modpack: {
         url = QString(ui->modpackUrl->text());
 
         if(isWindows)
-            modpackName = mc->getPath() + "modpack.zip";
+            modpackName = mc->getPath() + "/modpack.zip";
         else
             modpackName = "/home/" + name + MC_PATH + "/modpack.zip";
 
@@ -290,7 +289,7 @@ install_modpack: {
         }
 
         if(isWindows)
-            modpackProcess->execute(unzipName + " -q -o " + modpackName + " -d " + mc->getPath());
+            modpackProcess->execute("\"" + unzipName + "\"" + " -q -o " + "\"" + modpackName + "\"" + " -d " + "\"" + mc->getPath() + "\"");
         else
             modpackProcess->execute("unzip -o "+ modpackName + " -d " + "/home/" + name + MC_PATH + "/");
 
@@ -300,13 +299,13 @@ install_modpack: {
         while(modpackProcess->isOpen())
             QThread::msleep(1000);
 
-        copy_dir_recursive(mc->getPath() + "overrides", mc->getPath(), true);
+        copy_dir_recursive(mc->getPath() + "/overrides", mc->getPath(), true);
 
         QFile file;
         if(isWindows)
-            file.setFileName(mc->getPath() + "manifest.json");
+            file.setFileName(mc->getPath() + "/manifest.json");
         else
-            file.setFileName("/home/" + name + MC_PATH + "manifest.json");
+            file.setFileName("/home/" + name + MC_PATH + "/manifest.json");
 
         file.open(QIODevice::ReadOnly | QIODevice::Text);
 
@@ -316,7 +315,7 @@ install_modpack: {
         QScriptValue result = engine.evaluate("(" + data + ")");
 
         if(isWindows)
-            QDir().mkdir(mc->getPath() + "mods");
+            QDir().mkdir(mc->getPath() + "/mods");
         else
             QDir().mkdir("/home/" + name + MC_PATH + "/mods");
 
