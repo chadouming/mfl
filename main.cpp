@@ -1,3 +1,14 @@
+/*
+ * Copyright 2016-2017 MFL Project
+ *
+ * This is a placeholder until i choose a license
+ * that fits my need.
+ *
+ * Chad Cormier Roussel <chadcormierroussel@gmail.com>
+ * Christophe-Andre Gassman <Christo-Chibougamo@hotmail.com>
+ *
+ */
+
 #include "mainwindow.h"
 #include <QApplication>
 

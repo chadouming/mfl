@@ -1,3 +1,16 @@
+/*
+ * Copyright 2016-2017 MFL Project
+ *
+ * This is a placeholder until i choose a license
+ * that fits my need.
+ *
+ * Chad Cormier Roussel <chadcormierroussel@gmail.com>
+ * Christophe-Andre Gassman <Christo-Chibougamo@hotmail.com>
+ *
+ */
+
+#include "downloadmanager.h"
+#include "helper.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "settings.h"
@@ -20,8 +33,8 @@
 #include <QScriptValueIterator>
 #include <QDebug>
 #include <QFileDialog>
+#include <qiterator.h>
 
-bool m_isReady = true;
 bool isWindows = false;
 QFile settings("mflSettings.conf");
 
@@ -44,8 +57,6 @@ MainWindow::MainWindow(QWidget *parent) :
         if(tempMcPath.startsWith("mcPath:")){
             tempMcPath.remove(0, 7);
         }
-        qDebug("\nloadedPath - ");
-        qDebug(tempMcPath.toLatin1());
         mc.setPath(tempMcPath);
         settings.close();
     } else {
@@ -58,7 +69,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
-    qDebug("Saving settings to disc");
     settings.open(QIODevice::WriteOnly);
     QString tempPath = "mcPath:"+mc.getPath();
     settings.write(tempPath.toLatin1(), strlen(tempPath.toLatin1()));
@@ -126,8 +136,7 @@ int MainWindow::login()
 void MainWindow::on_dwnldButton_clicked()
 {
     QDir dir;
-    QEventLoop loop;
-    QUrl url;
+    QString url;
     QMessageBox mesg;
     QProcess * mcProcess = new QProcess(this);
     QProcess * forgeProcess = new QProcess(this);
@@ -159,26 +168,70 @@ void MainWindow::on_dwnldButton_clicked()
 
 
 install_minecraft: {
-        qDebug(mc.getPath().toLatin1());
-
-        if(isWindows) {
-        } else {
-            QDir().rename("/home/" + name + MC_PATH, "/home/" + name + MC_PATH + "_bak");
-            qDebug() << "Should be moved from : /home/" + name + MC_PATH + " to : /home/" + name + MC_PATH + "_bak";
-            QDir().mkdir("/home/" + name + MC_PATH);
-        }
-
         QDir().mkpath(mc.getPath());
 
-        url = QString("http://s3.amazonaws.com/Minecraft.Download/launcher/Minecraft.jar");
-        QString mcName = mc.getPath() + "/minecraft.jar";
+        ftd.url = "https://s3.amazonaws.com/Minecraft.Download/indexes/" + versionid.split(".")[0] + "." + versionid.split(".")[1] + ".json";
+        ftd.name = mc.getPath() + "resources.json";
 
-        downloadFile(url, mcName);
+        manager.append(ftd);
+        manager.startDownloads();
 
-        connect(manager, SIGNAL(finished(QNetworkReply *)), &loop, SLOT(quit()));
-        loop.exec();
+        QFile file2;
+        if(isWindows)
+            file2.setFileName(mc.getPath() + "resources.json");
+        else
+            file2.setFileName("/home/" + name + MC_PATH + "manifest.json");
 
-        mcProcess->execute("java -jar "+ mcName);
+        file2.open(QIODevice::ReadOnly | QIODevice::Text);
+
+        auto data2 = file2.readAll();
+        QJsonDocument jdoc = QJsonDocument::fromJson(data2);
+
+        QJsonObject root = jdoc.object();
+
+        QJsonValue objects = root.value("objects");
+        QVariantMap map = objects.toVariant().toMap();
+
+        ui->progressBar->setMaximum(map.count());
+
+        for (QVariantMap::const_iterator iter = map.begin(); iter != map.end(); ++iter)
+        {
+            QVariant variant = iter.value();
+            QVariantMap nested_objects = variant.toMap();
+
+            for (QVariantMap::const_iterator nested_iter = nested_objects.begin();
+                 nested_iter != nested_objects.end(); ++nested_iter)
+            {
+                QString key = nested_iter.key();
+                QVariant value = nested_iter.value();
+
+                QString hash = "";
+
+                if (key == "hash")
+                {
+                    hash = value.toString();
+                } else
+                    continue;
+
+                if(hash.isEmpty() || hash.isNull())
+                    continue;
+
+                QDir dir2(mc.getPath() + "resources");
+                if(!dir2.exists())
+                    dir2.mkpath(".");
+
+                QFile resourceFile(mc.getPath() + "resources/" + iter.key());
+                if(!QFileInfo(resourceFile).absoluteDir().exists())
+                    QFileInfo(resourceFile).absoluteDir().mkpath(".");
+
+                ftd.url = "https://resources.download.minecraft.net/" + hash.left(2) + "/" + hash;
+                ftd.name = mc.getPath() + "/resources/" + iter.key();
+
+                manager.append(ftd);
+                ui->progressBar->setValue(ui->progressBar->value() + 1);
+            }
+            manager.startDownloads();
+        }
 
         while(mcProcess->isOpen())
             QThread::msleep(1000);
@@ -200,10 +253,11 @@ install_forge: {
         else
             forgeName = mc.getPath() + "/forge-" + versionid + forgeid.replace("forge", "") + "-installer.jar";
 
-        downloadFile(url, forgeName);
+        ftd.url = url;
+        ftd.name = forgeName;
 
-        connect(manager, SIGNAL(finished(QNetworkReply *)), &loop, SLOT(quit()));
-        loop.exec();
+        manager.append(ftd);
+        manager.startDownloads();
 
         mesg.setText("This will download and install forge. \nSimply press ok.");
         mesg.exec();
@@ -213,7 +267,6 @@ install_forge: {
         while(forgeProcess->isOpen())
             QThread::msleep(1000);
 
-        qDebug() << "Removing forge jar";
         //QFile::remove(forgeName);
 
         return;
@@ -229,10 +282,12 @@ install_modpack: {
             QString unzipUrl = "http://stahlworks.com/dev/unzip.exe";
             unzipName = mc.getPath() + "/unzip.exe";
 
-            downloadFile(unzipUrl, unzipName);
+            ftd.url = unzipUrl;
+            ftd.name = unzipName;
 
-            connect(manager, SIGNAL(finished(QNetworkReply *)), &loop, SLOT(quit()));
-            loop.exec();
+            manager.append(ftd);
+            manager.startDownloads();
+
         }
 
         url = QString(ui->modpackUrl->text());
@@ -242,14 +297,16 @@ install_modpack: {
         else
             modpackName = "/home/" + name + MC_PATH + "/modpack.zip";
 
-        QFile modpack(url.toString());
+        QFile modpack(url);
 
         if(modpack.exists()) {
             modpack.copy(modpackName);
         } else {
-            downloadFile(url, modpackName);
-            connect(manager, SIGNAL(finished(QNetworkReply *)), &loop, SLOT(quit()));
-            loop.exec();
+            ftd.url = url;
+            ftd.name = modpackName;
+
+            manager.append(ftd);
+            manager.startDownloads();
         }
 
         if(isWindows)
@@ -321,6 +378,7 @@ install_modpack: {
                         QNetworkRequest req( QUrl( QString("https://minecraft.curseforge.com/projects/" + entry.property("projectID").toString()) ) );
                         QNetworkReply *reply2 = mgr.get(req);
                         eventLoop.exec(); // blocks stack until "finished()" has been called
+                        eventLoop.deleteLater();
 
                         if (reply2->error() == QNetworkReply::NoError) {
 
@@ -331,17 +389,19 @@ install_modpack: {
                             QObject::connect(&mgr2, SIGNAL(finished(QNetworkReply*)), &eventLoop2, SLOT(quit()));
 
                             // the HTTP request
-                            QNetworkRequest req2( QUrl( QString("https://minecraft.curseforge.com" + reply2->rawHeader("Location") + "/files/" + entry.property("fileID").toString() + "/download") ) );
+                            QNetworkRequest req2( QUrl( QString("https://minecraft.curseforge.com" + reply2->rawHeader("Location") + "/files/" + entry.property("fileID").toString() + "/download?cookieTest=1") ) );
 
-                            qDebug().nospace().noquote() << "\n\n https://minecraft.curseforge.com" << reply2->rawHeader("Location") << "/files/" << entry.property("fileID").toString() << "/download \n\n";
-                            qDebug().nospace().noquote() << "\n" << reply2->rawHeader("Location") << "\n\n";
+                            reply2->deleteLater();
 
                             QNetworkReply *reply3 = mgr2.get(req2);
                             eventLoop2.exec(); // blocks stack until "finished()" has been called
+                            eventLoop2.deleteLater();
 
                             QString buff = QString(reply3->rawHeader("Location"));
 
-                            if(req2.HttpStatusCodeAttribute != 302) {
+                            reply3->deleteLater();
+
+                            if(req2.HttpStatusCodeAttribute == 404) {
                                 // TODO: tell user which mod doesn't exist.
                                 continue;
                             }
@@ -349,69 +409,25 @@ install_modpack: {
 
                             url = buff;
 
-                            delete(reply3);
-
-                            QFileInfo f(url.toString());
+                            QFileInfo f(url);
                             QString s1 = f.fileName();
-
-                            ui->modlabel->setText(s1);
 
                             if(isWindows)
                                 modName = mc.getPath() + "/mods/" + s1;
                             else
                                 modName = "/home/" + name + MC_PATH + "/mods/" + s1;
 
-                            downloadFile(url, modName);
+                            ftd.url = url;
+                            ftd.name = modName;
 
-                            QEventLoop eventLoop3;
-                            connect(manager, SIGNAL(finished(QNetworkReply *)), &eventLoop3, SLOT(quit()));
-                            eventLoop3.exec();
-
+                            manager.append(ftd);
                         }
                 }
-
-                ui->modlabel->setText("Done");
            }
+          manager.startDownloads();
 
           goto install_minecraft;
     }
-}
-
-void MainWindow::downloadFile(QUrl url, QString fileName)
-{
-    m_file = new QFile();
-    m_file->setFileName(fileName);
-    m_file->open(QIODevice::WriteOnly);
-    m_isReady = false;
-    if (!m_file->isOpen()) {
-        m_isReady = true;
-        return; // TODO: permission check?
-    }
-
-    manager = new QNetworkAccessManager;
-
-    QNetworkRequest request;
-    //QSslConfiguration config = QSslConfiguration::defaultConfiguration();
-    //config.setProtocol(QSsl::TlsV1_2);
-    //request.setSslConfiguration(config);
-    request.setUrl(QUrl(url));
-
-    connect(manager, SIGNAL(finished(QNetworkReply *)), this, SLOT(onDownloadFileComplete(QNetworkReply *)));
-
-    reply = manager->get(request);
-
-    connect(reply, SIGNAL(downloadProgress(qint64,qint64)), SLOT(downloadProgress(qint64,qint64)));
-}
-
-void MainWindow::onDownloadFileComplete(QNetworkReply *reply) {
-    if (!m_file->isWritable()) {
-        m_isReady = true;
-        return; // TODO: error check
-    }
-
-    m_file->write(reply->readAll());
-    m_file->close(); // TODO: delete the file from the system later on
-    m_isReady = true;
 }
 
 void MainWindow::on_PassText_returnPressed()
@@ -422,69 +438,6 @@ void MainWindow::on_PassText_returnPressed()
 void MainWindow::on_launchButton_clicked()
 {
 
-}
-
-void MainWindow::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
-{
-    ui->downloadBar->setMaximum(bytesTotal);
-    ui->downloadBar->setValue(bytesReceived);
-    ui->downloadBar->show();
-}
-
-bool copy_dir_recursive(QString from_dir, QString to_dir, bool replace_on_conflit)
-{
-    QDir dir;
-    dir.setPath(from_dir);
-
-    from_dir += QDir::separator();
-    to_dir += QDir::separator();
-
-    foreach (QString copy_file, dir.entryList(QDir::Files))
-    {
-        QString from = from_dir + copy_file;
-        QString to = to_dir + copy_file;
-
-        if (QFile::exists(to))
-        {
-            if (replace_on_conflit)
-            {
-                if (QFile::remove(to) == false)
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                continue;
-            }
-        }
-
-        if (QFile::copy(from, to) == false)
-        {
-            return false;
-        }
-    }
-
-    foreach (QString copy_dir, dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
-    {
-        QString from = from_dir + copy_dir;
-        QString to = to_dir + copy_dir;
-
-        if (dir.mkpath(to) == false)
-        {
-            return false;
-        }
-
-        if (copy_dir_recursive(from, to, replace_on_conflit) == false)
-        {
-            return false;
-        }
-    }
-    QDir dir2(from_dir);
-
-    dir2.removeRecursively();
-
-    return true;
 }
 
 void MainWindow::on_Browse_clicked()

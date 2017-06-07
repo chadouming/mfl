@@ -19,11 +19,15 @@ TEMPLATE  = app
 SOURCES  += main.cpp\
             mainwindow.cpp \
             settings.cpp \
-            minecraft.cpp
+            minecraft.cpp \
+            helper.cpp \
+            downloadmanager.cpp
 
 HEADERS  += mainwindow.h \
             settings.h \
-            minecraft.h
+            minecraft.h \
+            helper.h \
+            downloadmanager.h
 
 FORMS    += mainwindow.ui \
             settings.ui

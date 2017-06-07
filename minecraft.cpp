@@ -1,3 +1,14 @@
+/*
+ * Copyright 2016-2017 MFL Project
+ *
+ * This is a placeholder until i choose a license
+ * that fits my need.
+ *
+ * Chad Cormier Roussel <chadcormierroussel@gmail.com>
+ * Christophe-Andre Gassman <Christo-Chibougamo@hotmail.com>
+ *
+ */
+
 #include "minecraft.h"
 
 Minecraft::Minecraft()
@@ -11,25 +22,17 @@ Minecraft::Minecraft()
     }
 
     if(isWindows)
-        path = "C:\\Users\\" + name + "\\minecraft\\installation\\";
+        path = "C:/Users/" + name + "/minecraft/installation/";
     else
         path = "/home/" + name + MC_PATH;
 }
 
 QString Minecraft::getPath()
 {
-    //qDebug("\nReturning path : ");
-    //qDebug(path.toLatin1());
     return path;
 }
 
 void Minecraft::setPath(QString p)
 {
-    //qDebug("\nOld path was : ");
-    //qDebug(path.toLatin1());
     path = p;
-    //qDebug("\nNew path is : ");
-    //qDebug(path.toLatin1());
-    //qDebug("\nIs supposed to be : ");
-    //qDebug(p.toLatin1());
 }

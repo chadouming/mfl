@@ -122,22 +122,6 @@
      <string/>
     </property>
    </widget>
-   <widget class="QProgressBar" name="downloadBar">
-    <property name="geometry">
-     <rect>
-      <x>150</x>
-      <y>340</y>
-      <width>311</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="value">
-     <number>0</number>
-    </property>
-    <property name="textVisible">
-     <bool>false</bool>
-    </property>
-   </widget>
    <widget class="QPushButton" name="dwnldButton">
     <property name="geometry">
      <rect>
@@ -253,33 +237,11 @@
       <x>150</x>
       <y>320</y>
       <width>311</width>
-      <height>16</height>
+      <height>41</height>
      </rect>
     </property>
     <property name="value">
      <number>0</number>
-    </property>
-   </widget>
-   <widget class="QLabel" name="modlabel">
-    <property name="geometry">
-     <rect>
-      <x>150</x>
-      <y>340</y>
-      <width>311</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="autoFillBackground">
-     <bool>false</bool>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignCenter</set>
-    </property>
-    <property name="wordWrap">
-     <bool>true</bool>
     </property>
    </widget>
    <widget class="QPushButton" name="Browse">
@@ -300,7 +262,6 @@
    <zorder>LoginText</zorder>
    <zorder>label</zorder>
    <zorder>label_2</zorder>
-   <zorder>downloadBar</zorder>
    <zorder>dwnldButton</zorder>
    <zorder>label_3</zorder>
    <zorder>modpackUrl</zorder>
@@ -309,7 +270,6 @@
    <zorder>scrollArea</zorder>
    <zorder>frame</zorder>
    <zorder>progressBar</zorder>
-   <zorder>modlabel</zorder>
    <zorder>ErrorLabel</zorder>
    <zorder>Browse</zorder>
   </widget>
@@ -319,7 +279,7 @@
      <x>0</x>
      <y>0</y>
      <width>713</width>
-     <height>20</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuHello">

@@ -1,3 +1,14 @@
+/*
+ * Copyright 2016-2017 MFL Project
+ *
+ * This is a placeholder until i choose a license
+ * that fits my need.
+ *
+ * Chad Cormier Roussel <chadcormierroussel@gmail.com>
+ * Christophe-Andre Gassman <Christo-Chibougamo@hotmail.com>
+ *
+ */
+
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
@@ -9,6 +20,7 @@
 #include <QStringList>
 #include "ui_mainwindow.h"
 #include "minecraft.h"
+#include "downloadmanager.h"
 
 namespace Ui {    
 class MainWindow;
@@ -28,10 +40,7 @@ private slots:
     void on_LoginButton_clicked();
     void on_dwnldButton_clicked();
     void on_PassText_returnPressed();
-    void onDownloadFileComplete(QNetworkReply *reply);
     void on_launchButton_clicked();
-    void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);
-
     void on_Browse_clicked();
 
     void on_actionSettings_triggered();
@@ -39,19 +48,15 @@ private slots:
 
     private:
     // Variable
+    DownloadManager manager;
+    fileToDownload ftd;
     Minecraft mc;
-    Ui::MainWindow *ui;
     QString name;
-    QNetworkAccessManager *manager;
     QNetworkReply *reply;
+    Ui::MainWindow *ui;
 
     // Methods
     int login();
-    void setProgress(int);
-    void downloadFile(QUrl url, QString fileName);
-
 };
-
-bool copy_dir_recursive(QString from_dir, QString to_dir, bool replace_on_conflit);
 
 #endif // MAINWINDOW_H
